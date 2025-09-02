@@ -182,10 +182,9 @@ void G1BarrierSetAssembler::g1_write_barrier_pre(MacroAssembler* masm,
   // into the runtime.
 
   // TODO 8366717 This came with 8284161: Implementation of Virtual Threads (Preview) later in May 2022
-  // Check if it's sufficient (looks like we need enter/leave as well to save lr)
+  // Check if it's sufficient
   //__ push_call_clobbered_registers();
   assert_different_registers(rscratch1, pre_val); // push_CPU_state trashes rscratch1
-  __ enter();
   __ push_CPU_state(true);
 
   // Calling the runtime using the regular call_VM_leaf mechanism generates
@@ -208,7 +207,6 @@ void G1BarrierSetAssembler::g1_write_barrier_pre(MacroAssembler* masm,
   }
 
   __ pop_CPU_state(true);
-  __ leave();
 
   __ bind(done);
 
@@ -290,13 +288,11 @@ void G1BarrierSetAssembler::g1_write_barrier_post(MacroAssembler* masm,
   // TODO 8366717 Without this, r11 is corrupted below and it holds the array of pre-allocated value objects in the C2I adapter...
   // Check if__ push_call_clobbered_registers() is sufficient
   assert_different_registers(rscratch1, tmp1); // push_CPU_state trashes rscratch1
-  __ enter();
   __ push_CPU_state(true);
 
   __ call_VM_leaf(CAST_FROM_FN_PTR(address, G1BarrierSetRuntime::write_ref_field_post_entry), tmp1, thread);
 
   __ pop_CPU_state(true);
-  __ leave();
 
   __ bind(done);
 }
