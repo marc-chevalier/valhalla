@@ -290,13 +290,11 @@ void G1BarrierSetAssembler::g1_write_barrier_post(MacroAssembler* masm,
   // TODO 8366717 Without this, r11 is corrupted below and it holds the array of pre-allocated value objects in the C2I adapter...
   // Check if__ push_call_clobbered_registers() is sufficient
   assert_different_registers(rscratch1, tmp1); // push_CPU_state trashes rscratch1
-  __ enter();
   __ push_CPU_state(true);
 
   __ call_VM_leaf(CAST_FROM_FN_PTR(address, G1BarrierSetRuntime::write_ref_field_post_entry), tmp1, thread);
 
   __ pop_CPU_state(true);
-  __ leave();
 
   __ bind(done);
 }
