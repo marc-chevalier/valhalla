@@ -1479,15 +1479,8 @@ Node* PhiNode::Identity(PhaseGVN* phase) {
     }
   }
   {
-    Node* uin = unique_input_recursive(phase);
+    Node* uin = unique_constant_input_recursive(phase);
     if (uin != nullptr) {
-      if (!uin->is_dead_loop_safe()) {
-        for (DUIterator_Fast imax, i = fast_outs(imax); i < imax; i++) {
-          if (fast_out(i) == uin) {
-            return phase->C->top();
-          }
-        }
-      }
       return uin;
     }
   }
@@ -1590,8 +1583,8 @@ Node* PhiNode::unique_input(PhaseValues* phase, bool uncast) {
   return nullptr;
 }
 
-// Find the unique input, try to look recursively through input Phis
-Node* PhiNode::unique_input_recursive(PhaseGVN* phase) {
+// Find the unique constant input, try to look recursively through input Phis
+Node* PhiNode::unique_constant_input_recursive(PhaseGVN* phase) {
   if (!phase->is_IterGVN()) {
     return nullptr;
   }
@@ -1613,6 +1606,9 @@ Node* PhiNode::unique_input_recursive(PhaseGVN* phase) {
         visited.push(phi_in);
       } else {
         if (unique == nullptr) {
+          if (!phi_in->is_Con()) {
+            return nullptr;
+          }
           unique = phi_in;
         } else if (unique != phi_in) {
           return nullptr;
