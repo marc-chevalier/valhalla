@@ -232,7 +232,7 @@ public:
     }
     return uin;
   }
-  Node* unique_constant_input_recursive(PhaseGVN* phase);
+  Node* unique_input_recursive(PhaseGVN* phase) const;
 
   // Check for a simple dead loop.
   enum LoopSafety { Safe = 0, Unsafe, UnsafeLoop };
