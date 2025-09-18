@@ -1307,12 +1307,20 @@ const Type* PhiNode::Value(PhaseGVN* phase) const {
   }
 
   // Default case: merge all inputs
-  const Type *t = Type::TOP;        // Merged type starting value
-  for (uint i = 1; i < req(); ++i) {// For all paths in
-    // Reachable control path?
-    if (r->in(i) && phase->type(r->in(i)) == Type::CONTROL) {
-      const Type* ti = phase->type(in(i));
-      t = t->meet_speculative(ti);
+  const Type *t;        // Merged type starting value
+  {
+    const Node* uin = unique_input_recursive(phase);
+    if (uin != nullptr) {
+      t = phase->type(uin);
+    } else {
+      t = Type::TOP;
+      for (uint i = 1; i < req(); ++i) { // For all paths in
+        // Reachable control path?
+        if (r->in(i) && phase->type(r->in(i)) == Type::CONTROL) {
+          const Type* ti = phase->type(in(i));
+          t = t->meet_speculative(ti);
+        }
+      }
     }
   }
 
@@ -1479,8 +1487,8 @@ Node* PhiNode::Identity(PhaseGVN* phase) {
     }
   }
   {
-    Node* uin = unique_constant_input_recursive(phase);
-    if (uin != nullptr) {
+    Node* uin = unique_input_recursive(phase);
+    if (uin != nullptr && uin->is_Con()) {
       return uin;
     }
   }
@@ -1584,18 +1592,18 @@ Node* PhiNode::unique_input(PhaseValues* phase, bool uncast) {
 }
 
 // Find the unique constant input, try to look recursively through input Phis
-Node* PhiNode::unique_constant_input_recursive(PhaseGVN* phase) {
+Node* PhiNode::unique_input_recursive(PhaseGVN* phase) const {
   if (!phase->is_IterGVN()) {
     return nullptr;
   }
 
   ResourceMark rm;
   Node* unique = nullptr;
-  Unique_Node_List visited;
+  GrowableArray<const PhiNode*> visited;
   visited.push(this);
 
-  for (uint visited_idx = 0; visited_idx < visited.size(); visited_idx++) {
-    Node* current = visited.at(visited_idx);
+  for (int visited_idx = 0; visited_idx < visited.length(); visited_idx++) {
+    const PhiNode* current = visited.at(visited_idx);
     for (uint i = 1; i < current->req(); i++) {
       Node* phi_in = current->in(i);
       if (phi_in == nullptr) {
@@ -1603,12 +1611,9 @@ Node* PhiNode::unique_constant_input_recursive(PhaseGVN* phase) {
       }
 
       if (phi_in->is_Phi()) {
-        visited.push(phi_in);
+        visited.append_if_missing(phi_in->as_Phi());
       } else {
         if (unique == nullptr) {
-          if (!phi_in->is_Con()) {
-            return nullptr;
-          }
           unique = phi_in;
         } else if (unique != phi_in) {
           return nullptr;
