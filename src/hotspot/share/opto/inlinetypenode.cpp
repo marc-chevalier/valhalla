@@ -1636,6 +1636,9 @@ const Type* InlineTypeNode::Value(PhaseGVN* phase) const {
     assert(false, "Unbuffered inline type should not have known instance id");
   }
 #endif
+  if (toop == Type::TOP) {
+    return Type::TOP;
+  }
   const Type* t = toop->filter_speculative(_type);
   if (t->singleton()) {
     // Don't replace InlineType by a constant

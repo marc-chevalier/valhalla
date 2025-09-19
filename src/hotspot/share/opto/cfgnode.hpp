@@ -232,6 +232,7 @@ public:
     }
     return uin;
   }
+  const Type* input_type_recursive(PhaseGVN* phase) const;
   Node* unique_input_recursive(PhaseGVN* phase) const;
 
   // Check for a simple dead loop.

@@ -1307,20 +1307,12 @@ const Type* PhiNode::Value(PhaseGVN* phase) const {
   }
 
   // Default case: merge all inputs
-  const Type *t;        // Merged type starting value
-  {
-    const Node* uin = unique_input_recursive(phase);
-    if (uin != nullptr) {
-      t = phase->type(uin);
-    } else {
-      t = Type::TOP;
-      for (uint i = 1; i < req(); ++i) { // For all paths in
-        // Reachable control path?
-        if (r->in(i) && phase->type(r->in(i)) == Type::CONTROL) {
-          const Type* ti = phase->type(in(i));
-          t = t->meet_speculative(ti);
-        }
-      }
+  const Type *t = Type::TOP;        // Merged type starting value
+  for (uint i = 1; i < req(); ++i) {// For all paths in
+    // Reachable control path?
+    if (r->in(i) && phase->type(r->in(i)) == Type::CONTROL) {
+      const Type* ti = phase->type(in(i));
+      t = t->meet_speculative(ti);
     }
   }
 
@@ -1589,6 +1581,45 @@ Node* PhiNode::unique_input(PhaseValues* phase, bool uncast) {
 
   // Nothing.
   return nullptr;
+}
+
+const Type* PhiNode::input_type_recursive(PhaseGVN* phase) const {
+  ResourceMark rm;
+  const Type* t = Type::TOP;
+  GrowableArray<const PhiNode*> visited;
+  visited.push(this);
+
+  for (int visited_idx = 0; visited_idx < visited.length(); visited_idx++) {
+    const PhiNode* current = visited.at(visited_idx);
+    Node* region = current->in(0);
+    if (region == nullptr) {
+      Node* phi_in = current->in(1);
+      if (phi_in == nullptr) {
+        continue;
+      }
+      if (phi_in->is_Phi()) {
+        visited.append_if_missing(phi_in->as_Phi());
+      } else {
+        t = t->meet_speculative(phase->type(phi_in));
+      }
+    } else {
+      for (uint i = 1; i < current->req(); i++) {
+        Node* phi_in = current->in(i);
+        if (phi_in == nullptr) {
+          continue;
+        }
+
+        if (phi_in->is_Phi()) {
+          visited.append_if_missing(phi_in->as_Phi());
+        } else {
+          if (region->in(i) != nullptr && phase->type(region->in(i)) == Type::CONTROL) {
+            t = t->meet_speculative(phase->type(phi_in));
+          }
+        }
+      }
+    }
+  }
+  return t;
 }
 
 // Find the unique constant input, try to look recursively through input Phis
