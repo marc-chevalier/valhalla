@@ -2161,9 +2161,16 @@ InlineTypeNode* PhiNode::push_inline_types_down(PhaseGVN* phase, bool can_reshap
       n = n->clone();
       n->as_InlineType()->set_oop(*phase, phase->transform(cast));
       n = phase->transform(n);
+      if (n->is_top()) {
+        break;
+      }
     }
     bool transform = !can_reshape && (i == (req()-1)); // Transform phis on last merge
-    vt->merge_with(phase, n->as_InlineType(), i, transform);
+    if (n->is_top()) {
+      vt->merge_with_top(phase, i, transform);
+    } else {
+      vt->merge_with(phase, n->as_InlineType(), i, transform);
+    }
   }
   return vt;
 }
