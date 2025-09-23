@@ -1479,8 +1479,8 @@ Node* PhiNode::Identity(PhaseGVN* phase) {
     }
   }
   {
-    Node* uin = unique_input_recursive(phase);
-    if (uin != nullptr && uin->is_Con()) {
+    Node* uin = unique_constant_input_recursive(phase);
+    if (uin != nullptr) {
       return uin;
     }
   }
@@ -1583,58 +1583,19 @@ Node* PhiNode::unique_input(PhaseValues* phase, bool uncast) {
   return nullptr;
 }
 
-const Type* PhiNode::input_type_recursive(PhaseGVN* phase) const {
-  ResourceMark rm;
-  const Type* t = Type::TOP;
-  GrowableArray<const PhiNode*> visited;
-  visited.push(this);
-
-  for (int visited_idx = 0; visited_idx < visited.length(); visited_idx++) {
-    const PhiNode* current = visited.at(visited_idx);
-    Node* region = current->in(0);
-    if (region == nullptr) {
-      Node* phi_in = current->in(1);
-      if (phi_in == nullptr) {
-        continue;
-      }
-      if (phi_in->is_Phi()) {
-        visited.append_if_missing(phi_in->as_Phi());
-      } else {
-        t = t->meet_speculative(phase->type(phi_in));
-      }
-    } else {
-      for (uint i = 1; i < current->req(); i++) {
-        Node* phi_in = current->in(i);
-        if (phi_in == nullptr) {
-          continue;
-        }
-
-        if (phi_in->is_Phi()) {
-          visited.append_if_missing(phi_in->as_Phi());
-        } else {
-          if (region->in(i) != nullptr && phase->type(region->in(i)) == Type::CONTROL) {
-            t = t->meet_speculative(phase->type(phi_in));
-          }
-        }
-      }
-    }
-  }
-  return t;
-}
-
-// Find the unique constant input, try to look recursively through input Phis
-Node* PhiNode::unique_input_recursive(PhaseGVN* phase) const {
+// Find the unique input, try to look recursively through input Phis
+Node* PhiNode::unique_constant_input_recursive(PhaseGVN* phase) {
   if (!phase->is_IterGVN()) {
     return nullptr;
   }
 
   ResourceMark rm;
   Node* unique = nullptr;
-  GrowableArray<const PhiNode*> visited;
+  Unique_Node_List visited;
   visited.push(this);
 
-  for (int visited_idx = 0; visited_idx < visited.length(); visited_idx++) {
-    const PhiNode* current = visited.at(visited_idx);
+  for (uint visited_idx = 0; visited_idx < visited.size(); visited_idx++) {
+    Node* current = visited.at(visited_idx);
     for (uint i = 1; i < current->req(); i++) {
       Node* phi_in = current->in(i);
       if (phi_in == nullptr) {
@@ -1642,9 +1603,12 @@ Node* PhiNode::unique_input_recursive(PhaseGVN* phase) const {
       }
 
       if (phi_in->is_Phi()) {
-        visited.append_if_missing(phi_in->as_Phi());
+        visited.push(phi_in);
       } else {
         if (unique == nullptr) {
+          if (!phi_in->is_Con()) {
+            return nullptr;
+          }
           unique = phi_in;
         } else if (unique != phi_in) {
           return nullptr;
