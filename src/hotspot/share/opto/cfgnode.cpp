@@ -2130,11 +2130,10 @@ InlineTypeNode* PhiNode::push_inline_types_down(PhaseGVN* phase, bool can_reshap
       }
     }
     bool transform = !can_reshape && (i == (req()-1)); // Transform phis on last merge
-    if (n->is_top()) {
-      vt->merge_with_top(phase, i, transform);
-    } else {
+    assert(n->is_top() || n->is_InlineType(), "Only InlineType or top at this point.");
+    if (n->is_InlineType()) {
       vt->merge_with(phase, n->as_InlineType(), i, transform);
-    }
+    } // else nothing to do: phis above vt created by clone_with_phis are initialized to top already.
   }
   return vt;
 }
