@@ -1334,6 +1334,24 @@ const Type* PhiNode::Value(PhaseGVN* phase) const {
   const Type* ft_ = t->filter_speculative(ft);
   if (!Type::equals(ft, ft_)) {
     stringStream ss;
+
+    for (uint i = 1; i < req(); ++i) {
+      ss.print("in(%d): ", i);
+      if (r->in(i) && phase->type(r->in(i)) == Type::CONTROL) {
+        const Type* ti = phase->type(in(i));
+        ti->dump_on(&ss);
+      }
+      ss.print_cr("");
+    }
+
+    ss.print("t: ");
+    t->dump_on(&ss);
+    ss.print_cr("");
+
+    ss.print("_type: ");
+    _type->dump_on(&ss);
+    ss.print_cr("");
+
     ss.print("Filter once: ");
     ft->dump_on(&ss);
     ss.print_cr("");
