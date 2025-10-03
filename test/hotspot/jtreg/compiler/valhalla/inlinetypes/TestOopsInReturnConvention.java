@@ -32,48 +32,50 @@
  *                   -Xbatch -XX:-TieredCompilation
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention::callee
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention*::verify
- *                   TestOopsInReturnConvention Interpreted
+ *                   compiler.valhalla.inlinetypes.TestOopsInReturnConvention Interpreted
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
  *                   -Xbatch
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention::callee
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention*::verify
- *                   TestOopsInReturnConvention C1
+ *                   compiler.valhalla.inlinetypes.TestOopsInReturnConvention C1
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
  *                   -Xbatch -XX:-TieredCompilation
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention::callee
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention*::verify
- *                   TestOopsInReturnConvention C2
+ *                   compiler.valhalla.inlinetypes.TestOopsInReturnConvention C2
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
  *                   -Xbatch -XX:-TieredCompilation -XX:+IgnoreUnrecognizedVMOptions -XX:+StressCallingConvention
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention::callee
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention*::verify
- *                   TestOopsInReturnConvention Interpreted
+ *                   compiler.valhalla.inlinetypes.TestOopsInReturnConvention Interpreted
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
  *                   -Xbatch -XX:+IgnoreUnrecognizedVMOptions -XX:+StressCallingConvention
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention::callee
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention*::verify
- *                   TestOopsInReturnConvention C1
+ *                   compiler.valhalla.inlinetypes.TestOopsInReturnConvention C1
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
  *                   -Xbatch -XX:-TieredCompilation -XX:+IgnoreUnrecognizedVMOptions -XX:+StressCallingConvention
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention::callee
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention*::verify
- *                   TestOopsInReturnConvention C2
+ *                   compiler.valhalla.inlinetypes.TestOopsInReturnConvention C2
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
  *                   -Xbatch -XX:-TieredCompilation -XX:+IgnoreUnrecognizedVMOptions -XX:-PreloadClasses
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention::callee
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention*::verify
- *                   TestOopsInReturnConvention Interpreted
+ *                   compiler.valhalla.inlinetypes.TestOopsInReturnConvention Interpreted
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
  *                   -Xbatch -XX:+IgnoreUnrecognizedVMOptions -XX:-PreloadClasses
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention::callee
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention*::verify
- *                   TestOopsInReturnConvention C1
+ *                   compiler.valhalla.inlinetypes.TestOopsInReturnConvention C1
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
  *                   -Xbatch -XX:-TieredCompilation -XX:+IgnoreUnrecognizedVMOptions -XX:-PreloadClasses
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention::callee
  *                   -XX:CompileCommand=dontinline,TestOopsInReturnConvention*::verify
- *                   TestOopsInReturnConvention C2
+ *                   compiler.valhalla.inlinetypes.TestOopsInReturnConvention C2
  **/
+
+package compiler.valhalla.inlinetypes;
 
 import java.lang.reflect.Method;
 
