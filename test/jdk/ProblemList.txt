@@ -841,6 +841,8 @@ java/lang/invoke/VarHandles/VarHandleTestMethodHandleAccessValue.java 8367346 ge
 jdk/classfile/AccessFlagsTest.java 8366270 generic-all
 jdk/jfr/event/runtime/TestClassLoaderStatsEvent.java 8366820 generic-all
 
+jdk/internal/vm/Continuation/Fuzz.java 8370177 generic-aarch64
+
 sun/tools/jhsdb/BasicLauncherTest.java 8366806 generic-all
 sun/tools/jhsdb/HeapDumpTest.java 8366806 generic-all
 sun/tools/jhsdb/HeapDumpTestWithActiveProcess.java 8366806 generic-all
