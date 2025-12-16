@@ -235,7 +235,7 @@ void G1BarrierSetAssembler::g1_write_barrier_pre(MacroAssembler* masm,
 
   __ bind(runtime);
 
-  if (EnableValhalla && InlineTypePassFieldsAsArgs) {
+  if (false && EnableValhalla && InlineTypePassFieldsAsArgs) {
     // Barriers might be emitted when converting between (scalarized) calling conventions for inline
     // types. Save all argument registers before calling into the runtime.
     // TODO 8366717: use push_set() (see JDK-8283327 push/pop_call_clobbered_registers & aarch64 )
