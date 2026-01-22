@@ -42,6 +42,12 @@ class flatArrayOopDesc : public objArrayOopDesc {
 
   inline oop obj_at(int index) const;
   inline oop obj_at(int index, TRAPS) const;
+  template <typename T> T field_at(int index, int field_byte_offset) const;
+  template <typename T> T field_at(int index, int field_byte_offset, TRAPS) const;
+  inline oop oop_field_at(int index, int field_byte_offset) const;
+  inline oop oop_field_at(int index, int field_byte_offset, TRAPS) const;
+  inline oop flat_object_field_at(int index, int field_byte_offset, InlineKlass* vk) const;
+  inline oop flat_object_field_at(int index, int field_byte_offset, InlineKlass* vk, TRAPS) const;
   inline jboolean null_marker_of_obj_at(int index) const;
   inline jboolean null_marker_of_obj_at(int index, TRAPS) const;
   inline void obj_at_put(int index, oop value);

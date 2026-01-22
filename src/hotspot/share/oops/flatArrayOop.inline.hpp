@@ -81,6 +81,32 @@ inline jboolean flatArrayOopDesc::null_marker_of_obj_at(int index, TRAPS) const 
   return bool_field(offset);
 }
 
+template <typename T> T flatArrayOopDesc::field_at(int index, int field_byte_offset) const {
+  EXCEPTION_MARK;
+  return field_at<T>(index, field_byte_offset, THREAD);
+}
+template <typename T> T flatArrayOopDesc::field_at(int index, int field_byte_offset, TRAPS) const {
+  assert(is_within_bounds(index), "index %d out of bounds %d", index, length());
+  FlatArrayKlass* faklass = FlatArrayKlass::cast(klass());
+  char* this_oop = (char*) (oopDesc*) this;
+  char* val = (char*) value_at_addr(index, faklass->layout_helper());
+  ptrdiff_t offset = val - this_oop + field_byte_offset;
+  return *field_addr<T>(offset);
+}
+
+inline oop flatArrayOopDesc::oop_field_at(int index, int field_byte_offset) const {
+  EXCEPTION_MARK;
+  return oop_field_at(index, field_byte_offset, THREAD);
+}
+inline oop flatArrayOopDesc::oop_field_at(int index, int field_byte_offset, TRAPS) const {
+  assert(is_within_bounds(index), "index %d out of bounds %d", index, length());
+  FlatArrayKlass* faklass = FlatArrayKlass::cast(klass());
+  char* this_oop = (char*) (oopDesc*) this;
+  char* val = (char*) value_at_addr(index, faklass->layout_helper());
+  ptrdiff_t offset = val - this_oop + field_byte_offset;
+  return obj_field(offset);
+}
+
 inline void flatArrayOopDesc::obj_at_put(int index, oop value) {
   EXCEPTION_MARK;                                 // What if the caller is not a Java Thread?
   obj_at_put(index, value, THREAD);

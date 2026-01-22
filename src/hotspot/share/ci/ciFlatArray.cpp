@@ -58,7 +58,7 @@ ciConstant ciFlatArray::check_constant_null_marker_cache(int off) {
 
 void ciFlatArray::add_to_constant_null_marker_cache(int off, ciConstant val) {
   assert(val.is_valid(), "value must be valid");
-  assert(!check_constant_value_cache(off, val.basic_type()).is_valid(), "duplicate");
+  assert(!check_constant_null_marker_cache(off).is_valid(), "duplicate");
   if (_constant_null_markers == nullptr) {
     Arena* arena = CURRENT_ENV->arena();
     _constant_null_markers = new (arena) GrowableArray<ConstantValue>(arena, 1, 0, ConstantValue());
@@ -132,34 +132,50 @@ ciConstant ciFlatArray::field_value_by_offset(intptr_t field_offset) {
   return elt;
 }
 
-ciConstant ciFlatArray::field_value(int index, ciField* field) {
-  auto get_field_from_object_constant = [field](const ciConstant& v) -> ciConstant {
-    ciObject* obj = v.as_object();
-    if (obj->is_null_object()) {
-      return ciConstant();
-    }
-    // obj cannot be an ciArray since it is an element of a flat array, so it must be a value class, which arrays are not.
-    ciInstance* inst = obj->as_instance();
-    if (field == nullptr) {
-      return inst->null_marker_value();
-    }
-    return inst->field_value(field);
-  };
-
-  BasicType elembt = element_basic_type();
-  ciConstant value = check_constant_value_cache(index, elembt);
-  if (value.is_valid()) {
-    return get_field_from_object_constant(value);
-  }
-  GUARDED_VM_ENTRY(
-    value = element_value_impl(T_OBJECT, get_arrayOop(), index);
-  )
-
-  if (!value.is_valid()) {
+ciConstant ciFlatArray::field_value_impl(int index, ciField* field) {
+  flatArrayOop ary = (flatArrayOop)get_arrayOop();
+  if (ary == nullptr) {
     return ciConstant();
   }
 
-  add_to_constant_value_cache(index, value);
-  return get_field_from_object_constant(value);
+  assert(ary->is_flatArray(), "");
+
+  if (index < 0 || index >= ary->length()) {
+    return ciConstant();
+  }
+
+  if (field == nullptr) {
+    return ciConstant(T_BOOLEAN, ary->null_marker_of_obj_at(index));
+  }
+
+  jint value;
+  BasicType field_bt = field->type()->basic_type();
+  ciInlineKlass* elt_type = element_type()->as_inline_klass();
+  int field_off = field->offset_in_bytes() - elt_type->payload_offset();
+  switch (field_bt) {
+  case T_ARRAY:
+  case T_OBJECT: {
+    assert(!field->is_flat(), "that won't work for flat fields");
+      oop f = ary->oop_field_at(index, field_off);
+      return ciConstant(field_bt, CURRENT_ENV->get_object(f));
+  }
+  case T_LONG:   return ciConstant(ary->field_at<jlong  >(index, field_off));
+  case T_FLOAT:  return ciConstant(ary->field_at<jfloat >(index, field_off));
+  case T_DOUBLE: return ciConstant(ary->field_at<jdouble>(index, field_off));
+  default:       return ciConstant();
+  case T_BYTE:    value = ary->field_at<jbyte >(index, field_off);     break;
+  case T_BOOLEAN: value = ary->field_at<jbyte >(index, field_off) & 1; break;
+  case T_SHORT:   value = ary->field_at<jshort>(index, field_off);     break;
+  case T_CHAR:    value = ary->field_at<jchar >(index, field_off);     break;
+  case T_INT:     value = ary->field_at<jint  >(index, field_off);     break;
+  }
+  return ciConstant(field_bt, value);
 }
 
+ciConstant ciFlatArray::field_value(int index, ciField* field) {
+  ciConstant value;
+  GUARDED_VM_ENTRY(
+    value = field_value_impl(index, field);
+  )
+  return value;
+}

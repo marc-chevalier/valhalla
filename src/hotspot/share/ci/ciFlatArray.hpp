@@ -53,6 +53,8 @@ public:
   ciConstant null_marker_of_element_by_index(int index);
 
 private:
+  ciConstant field_value_impl(int index, ciField* field);
+
   ciConstant null_marker_of_element_by_offset_impl(arrayOop ary, int index);
   ciConstant check_constant_null_marker_cache(int off);
   void add_to_constant_null_marker_cache(int off, ciConstant val);
