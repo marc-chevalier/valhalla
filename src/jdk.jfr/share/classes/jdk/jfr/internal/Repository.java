@@ -114,11 +114,29 @@ public final class Repository {
         }
     }
 
+    static class OmaeWaMouShindeiru extends RuntimeException {
+        @java.io.Serial
+        private static final long serialVersionUID = 42;
+
+        public OmaeWaMouShindeiru(){
+            super();
+        }
+
+        public OmaeWaMouShindeiru(String message){
+            super(message);
+        }
+    }
+
     private static Path createRepository(Path basePath) throws IOException {
         Path canonicalBaseRepositoryPath = createRealBasePath(basePath);
         Path f = null;
 
-        String basename = ValueFormatter.formatDateTime(timestamp()) + "_" + JVM.getPid();
+        var time = timestamp();
+        if (time == null) {
+            throw new OmaeWaMouShindeiru();
+        }
+
+        String basename = ValueFormatter.formatDateTime(time) + "_" + JVM.getPid();
         String name = basename;
 
         int i = 0;
