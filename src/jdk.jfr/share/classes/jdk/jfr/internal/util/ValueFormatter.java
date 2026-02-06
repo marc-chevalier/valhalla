@@ -74,9 +74,22 @@ public final class ValueFormatter {
         return String.format("%d%s%s", value, separation, result.text);
     }
 
+    static class OmaeWaMouShindeiru extends RuntimeException {
+        public OmaeWaMouShindeiru(){
+            super();
+        }
+
+        public OmaeWaMouShindeiru(String message){
+            super(message);
+        }
+    }
+
     // This method reduces the number of loaded classes
     // compared to DateTimeFormatter
     public static String formatDateTime(LocalDateTime time) {
+        if (time == null) {
+            throw new OmaeWaMouShindeiru();
+        }
         StringBuilder sb = new StringBuilder(19);
         sb.append(time.getYear() / 100);
         appendPadded(sb, time.getYear() % 100, true);
