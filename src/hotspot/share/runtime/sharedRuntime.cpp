@@ -1660,6 +1660,7 @@ JRT_BLOCK_ENTRY(address, SharedRuntime::resolve_static_call_C(JavaThread* curren
   JRT_BLOCK
     callee_method = SharedRuntime::resolve_helper(false, false, caller_does_not_scalarize, CHECK_NULL);
     if (UseNewCode && (callee_method()->method_holder()->name()->is_star_match("ValueFormatter") || callee_method()->method_holder()->name()->is_star_match("*/ValueFormatter")) && callee_method()->name()->is_star_match("formatDateTime")) {
+      ResourceMark rm;
       tty->print("caller_does_not_scalarize: %d; callee: ", caller_does_not_scalarize);
       callee_method()->print_name();
       tty->print_cr("");
@@ -1668,12 +1669,19 @@ JRT_BLOCK_ENTRY(address, SharedRuntime::resolve_static_call_C(JavaThread* curren
 
       tty->print_cr("code: %p", callee_method->code());
       tty->print_cr("adapter: %p", callee_method->adapter());
+      tty->print_cr("adapter->get_c2i_entry: %p", callee_method->get_c2i_entry());
       tty->print_cr("adapter->c2i_inline_entry: %p", callee_method->adapter()->get_c2i_inline_entry());
       tty->print_cr("verified_inline_code_entry: %p", callee_method->verified_inline_code_entry());
-      callee_method->adapter()->adapter_blob()->print();
-      MutexLocker mu(AdapterHandlerLibrary_lock);
-      callee_method->adapter()->adapter_blob()->dump_for_addr(callee_method->verified_inline_code_entry(), tty, true);
-      callee_method->adapter()->adapter_blob()->print_code_on(tty);
+      if (current->is_interp_only_mode() && !callee_method->is_special_native_intrinsic()) {
+        callee_method->adapter()->adapter_blob()->print();
+        MutexLocker mu(AdapterHandlerLibrary_lock);
+        callee_method->adapter()->adapter_blob()->dump_for_addr(callee_method->verified_inline_code_entry(), tty, true);
+      } else {
+        callee_method->adapter()->adapter_blob()->print();
+        MutexLocker mu(AdapterHandlerLibrary_lock);
+        callee_method->adapter()->adapter_blob()->dump_for_addr(callee_method->get_c2i_entry(), tty, true);
+      }
+        callee_method->adapter()->adapter_blob()->print_code_on(tty);
     }
     current->set_vm_result_metadata(callee_method());
   JRT_BLOCK_END
