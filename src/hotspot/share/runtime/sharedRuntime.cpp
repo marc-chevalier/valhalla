@@ -1667,19 +1667,20 @@ JRT_BLOCK_ENTRY(address, SharedRuntime::resolve_static_call_C(JavaThread* curren
       tty->print_cr("is_interp_only_mode: %d; is_special_native_intrinsic: %d", current->is_interp_only_mode(), callee_method->is_special_native_intrinsic());
 
 
-      tty->print_cr("code: %p", callee_method->code());
+      tty->print_cr("callee->method: %p", callee_method->code());
       tty->print_cr("adapter: %p", callee_method->adapter());
-      tty->print_cr("adapter->get_c2i_entry: %p", callee_method->get_c2i_entry());
+      tty->print_cr("adapter->c2i_inline_entry: %p", callee_method->adapter()->get_c2i_entry());
+      tty->print_cr("get_c2i_entry: %p", callee_method->get_c2i_entry());
       tty->print_cr("adapter->c2i_inline_entry: %p", callee_method->adapter()->get_c2i_inline_entry());
       tty->print_cr("verified_inline_code_entry: %p", callee_method->verified_inline_code_entry());
       if (current->is_interp_only_mode() && !callee_method->is_special_native_intrinsic()) {
         callee_method->adapter()->adapter_blob()->print();
         MutexLocker mu(AdapterHandlerLibrary_lock);
-        callee_method->adapter()->adapter_blob()->dump_for_addr(callee_method->verified_inline_code_entry(), tty, true);
+        callee_method->adapter()->adapter_blob()->dump_for_addr(callee_method->get_c2i_entry(), tty, true);
       } else {
         callee_method->adapter()->adapter_blob()->print();
         MutexLocker mu(AdapterHandlerLibrary_lock);
-        callee_method->adapter()->adapter_blob()->dump_for_addr(callee_method->get_c2i_entry(), tty, true);
+        callee_method->adapter()->adapter_blob()->dump_for_addr(callee_method->verified_inline_code_entry(), tty, true);
       }
         callee_method->adapter()->adapter_blob()->print_code_on(tty);
     }
