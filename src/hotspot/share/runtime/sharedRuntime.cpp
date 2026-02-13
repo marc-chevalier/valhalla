@@ -1634,7 +1634,8 @@ JRT_END
 // otherwise return c2i entry.
 address SharedRuntime::get_resolved_entry(JavaThread* current, methodHandle callee_method,
                                           bool is_static_call, bool is_optimized, bool caller_does_not_scalarize) {
-  if (current->is_interp_only_mode() && !callee_method->is_special_native_intrinsic()) {
+  bool is_interp_only_mode = (StressCallingConvention && (os::random() & 1) == 1) || current->is_interp_only_mode();
+  if (is_interp_only_mode && !callee_method->is_special_native_intrinsic()) {
     // In interp_only_mode we need to go to the interpreted entry
     // The c2i won't patch in this mode -- see fixup_callers_callsite
     return callee_method->get_c2i_entry();
@@ -1659,6 +1660,51 @@ JRT_BLOCK_ENTRY(address, SharedRuntime::resolve_static_call_C(JavaThread* curren
   bool enter_special = false;
   JRT_BLOCK
     callee_method = SharedRuntime::resolve_helper(false, false, caller_does_not_scalarize, CHECK_NULL);
+    if (UseNewCode && (callee_method()->method_holder()->name()->is_star_match("Test") || callee_method()->method_holder()->name()->is_star_match("*/Test")) && callee_method()->name()->is_star_match("g")) {
+      ResourceMark rm;
+
+      RegisterMap cbl_map(current,
+                          RegisterMap::UpdateMap::skip,
+                          RegisterMap::ProcessFrames::include,
+                          RegisterMap::WalkContinuation::skip);
+      frame caller_frame = current->last_frame().sender(&cbl_map);
+      CodeBlob* caller_cb = caller_frame.cb();
+      guarantee(caller_cb != nullptr && caller_cb->is_nmethod(), "must be called from compiled method");
+      nmethod* caller_nm = caller_cb->as_nmethod();
+
+      tty->print_cr("caller_frame:");
+      caller_frame.print_value_on(tty);
+      tty->print_cr("caller_nm:");
+      caller_nm->print();
+      tty->print_cr("caller:");
+      caller_nm->print_code();
+
+
+
+      tty->print("caller_does_not_scalarize: %d; callee: ", caller_does_not_scalarize);
+      callee_method()->print_name();
+      tty->print_cr("");
+      tty->print_cr("is_interp_only_mode: %d; is_special_native_intrinsic: %d", current->is_interp_only_mode(), callee_method->is_special_native_intrinsic());
+
+
+      tty->print_cr("callee->method: %p", callee_method->code());
+      tty->print_cr("adapter: %p", callee_method->adapter());
+      tty->print_cr("adapter_blob: %p", callee_method->adapter()->adapter_blob());
+      tty->print_cr("adapter->c2i_inline_entry: %p", callee_method->adapter()->get_c2i_entry());
+      tty->print_cr("get_c2i_entry: %p", callee_method->get_c2i_entry());
+      tty->print_cr("adapter->c2i_inline_entry: %p", callee_method->adapter()->get_c2i_inline_entry());
+      tty->print_cr("verified_inline_code_entry: %p", callee_method->verified_inline_code_entry());
+      if (current->is_interp_only_mode() && !callee_method->is_special_native_intrinsic()) {
+        callee_method->adapter()->adapter_blob()->print();
+        MutexLocker mu(AdapterHandlerLibrary_lock);
+        callee_method->adapter()->adapter_blob()->dump_for_addr(callee_method->get_c2i_entry(), tty, true);
+      } else {
+        callee_method->adapter()->adapter_blob()->print();
+        MutexLocker mu(AdapterHandlerLibrary_lock);
+        callee_method->adapter()->adapter_blob()->dump_for_addr(callee_method->verified_inline_code_entry(), tty, true);
+      }
+      callee_method->adapter()->adapter_blob()->print_code_on(tty);
+    }
     current->set_vm_result_metadata(callee_method());
   JRT_BLOCK_END
   // return compiled code entry point after potential safepoints
