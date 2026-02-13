@@ -1638,7 +1638,7 @@ address SharedRuntime::get_resolved_entry(JavaThread* current, methodHandle call
   if (is_interp_only_mode && !callee_method->is_special_native_intrinsic()) {
     // In interp_only_mode we need to go to the interpreted entry
     // The c2i won't patch in this mode -- see fixup_callers_callsite
-    return callee_method->get_c2i_entry();
+    return caller_does_not_scalarize ? callee_method->get_c2i_inline_entry() : callee_method->get_c2i_entry();
   }
 
   if (caller_does_not_scalarize) {
