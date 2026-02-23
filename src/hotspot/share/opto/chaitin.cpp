@@ -2386,7 +2386,7 @@ char *PhaseChaitin::dump_register(const Node* n, char* buf, size_t buf_size) con
 }
 
 void PhaseChaitin::dump_for_spill_split_recycle() const {
-  if( WizardMode && (PrintCompilation || PrintOpto) ) {
+  if( WizardMode && (PrintCompilation || C->directive()->PrintCompilationOption || PrintOpto) ) {
     // Display which live ranges need to be split and the allocator's state
     tty->print_cr("Graph-Coloring Iteration %d will split the following live ranges", _trip_cnt);
     for (uint bidx = 1; bidx < _lrg_map.max_lrg_id(); bidx++) {

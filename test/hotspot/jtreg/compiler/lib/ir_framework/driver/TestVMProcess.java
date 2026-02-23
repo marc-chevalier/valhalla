@@ -145,7 +145,7 @@ public class TestVMProcess {
      * Default flags that are added used for the Test VM.
      */
     private static String[] getDefaultFlags() {
-        return new String[] {"-XX:-BackgroundCompilation", "-XX:CompileCommand=quiet", "-XX:+PrintCompilation", "-XX:CompileCommand=PrintCompilation,compiler.valhalla.inlinetypes.TestLWorld::test178", "-XX:+WizardMode"};
+        return new String[] {"-XX:-BackgroundCompilation", "-XX:CompileCommand=quiet", "-XX:CompileCommand=PrintCompilation,compiler.valhalla.inlinetypes.TestLWorld::test178", "-XX:+WizardMode"};
     }
 
     /**
