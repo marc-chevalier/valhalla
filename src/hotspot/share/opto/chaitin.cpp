@@ -568,9 +568,9 @@ void PhaseChaitin::Register_Allocate() {
 
   // If we spill, split and recycle the entire thing
   while( spills ) {
-    if( _trip_cnt++ > 22 ) {
+    if( _trip_cnt++ > 21 ) {
       DEBUG_ONLY( dump_for_spill_split_recycle(); )
-      if( _trip_cnt > 25 ) {
+      if( _trip_cnt > 24 ) {
         C->record_method_not_compilable("failed spill-split-recycle sanity check");
         return;
       }
