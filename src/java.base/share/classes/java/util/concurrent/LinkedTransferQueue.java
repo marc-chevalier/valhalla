@@ -423,6 +423,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
         }
 
         static void check(Object e) {
+            System.out.println("e: " + e);
             if (e == null) {
                 throw new OmaeWaMouShindeiru();
             }
