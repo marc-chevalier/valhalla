@@ -411,6 +411,17 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
          */
         private static final int UNIPROCESSOR_REFRESH_RATE = (1 << 5) - 1;
 
+        static class OmaeWaMouShindeiru extends RuntimeException {
+            @java.io.Serial
+            private static final long serialVersionUID = 42;
+            public OmaeWaMouShindeiru(){
+                super();
+            }
+            public OmaeWaMouShindeiru(String message){
+                super(message);
+            }
+        }
+
         /**
          * Possibly blocks until matched or caller gives up.
          *
@@ -420,7 +431,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
          * @param spin true if should spin when enabled
          * @return matched item, or e if unmatched on interrupt or timeout
          */
-        final Object await(Object e, long ns, Object blocker, boolean spin) {
+        final Object await(Object e, long ns, Object blocker, boolean spin, boolean flag) {
             Object m;                      // the match or e if none
             boolean timed = (ns != Long.MAX_VALUE);
             long deadline = (timed) ? System.nanoTime() + ns : 0L;
@@ -454,8 +465,16 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
                     try {
                         ForkJoinPool.managedBlock(this);
                     } catch (InterruptedException cannotHappen) { }
-                } else
-                    LockSupport.park();
+                } else {
+                    if (e == null && flag) {
+                        LockSupport.park();
+                    } else {
+                        LockSupport.park();
+                        if (e == null) {
+                            throw new OmaeWaMouShindeiru();
+                        }
+                    }
+                }
             }
             if (spins < 0) {
                 LockSupport.setCurrentBlocker(null);
@@ -613,7 +632,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
         if (s == null || ns <= 0L)
             m = e;                          // don't wait
         else if ((m = s.await(e, ns, this,  // spin if at or near head
-                              p == null || p.waiter == null)) == e)
+                              p == null || p.waiter == null, true)) == e)
             unsplice(p, s);                 // cancelled
         else if (m != null)
             s.selfLinkItem();
