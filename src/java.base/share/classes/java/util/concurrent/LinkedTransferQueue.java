@@ -449,7 +449,6 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
             if (spin && ForkJoinWorkerThread.hasKnownQueuedWork())
                 spin = false;              // don't spin
             int spins = (spin & !upc) ? SPINS : 0; // negative when may park
-            boolean was_put = (e != null);
             while ((m = item) == e) {
                 if (spins >= 0) {
                     if (--spins >= 0)
@@ -475,12 +474,8 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
                     try {
                         ForkJoinPool.managedBlock(this);
                     } catch (InterruptedException cannotHappen) { }
-                } else {
+                } else
                     LockSupport.park();
-                }
-            }
-            if (was_put) {
-                check(e, item);
             }
             if (spins < 0) {
                 LockSupport.setCurrentBlocker(null);
