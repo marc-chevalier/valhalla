@@ -192,7 +192,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
                 s.next = p;
                 if (p == (p = cmpExHead(p, s))) {
                     if ((m = s.await(e, ns, this,  // spin if (nearly) empty
-                                     p == null || p.waiter == null, true)) == e)
+                                     p == null || p.waiter == null)) == e)
                         unspliceLifo(s);           // cancelled
                     else if (m != null)
                         s.selfLinkItem();

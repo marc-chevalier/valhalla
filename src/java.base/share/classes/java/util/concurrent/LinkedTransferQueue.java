@@ -422,6 +422,12 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
             }
         }
 
+        static void check(Object e) {
+            if (e == null) {
+                throw new OmaeWaMouShindeiru();
+            }
+        }
+
         /**
          * Possibly blocks until matched or caller gives up.
          *
@@ -431,7 +437,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
          * @param spin true if should spin when enabled
          * @return matched item, or e if unmatched on interrupt or timeout
          */
-        final Object await(Object e, long ns, Object blocker, boolean spin, boolean flag) {
+        final Object await(Object e, long ns, Object blocker, boolean spin) {
             Object m;                      // the match or e if none
             boolean timed = (ns != Long.MAX_VALUE);
             long deadline = (timed) ? System.nanoTime() + ns : 0L;
@@ -466,13 +472,11 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
                         ForkJoinPool.managedBlock(this);
                     } catch (InterruptedException cannotHappen) { }
                 } else {
-                    if (e == null && flag) {
+                    if (e == null) {
                         LockSupport.park();
                     } else {
                         LockSupport.park();
-                        if (e == null) {
-                            throw new OmaeWaMouShindeiru();
-                        }
+                        check(e);
                     }
                 }
             }
@@ -632,7 +636,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
         if (s == null || ns <= 0L)
             m = e;                          // don't wait
         else if ((m = s.await(e, ns, this,  // spin if at or near head
-                              p == null || p.waiter == null, true)) == e)
+                              p == null || p.waiter == null)) == e)
             unsplice(p, s);                 // cancelled
         else if (m != null)
             s.selfLinkItem();
