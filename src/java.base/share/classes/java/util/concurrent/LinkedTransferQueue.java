@@ -422,9 +422,11 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
             }
         }
 
-        static void check(Object e) {
-            System.out.println("e: " + e);
+        static void check(Object e, Object item) {
             if (e == null) {
+                throw new OmaeWaMouShindeiru();
+            }
+            if (item != null) {
                 throw new OmaeWaMouShindeiru();
             }
         }
@@ -447,6 +449,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
             if (spin && ForkJoinWorkerThread.hasKnownQueuedWork())
                 spin = false;              // don't spin
             int spins = (spin & !upc) ? SPINS : 0; // negative when may park
+            boolean was_put = (e != null);
             while ((m = item) == e) {
                 if (spins >= 0) {
                     if (--spins >= 0)
@@ -473,13 +476,11 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
                         ForkJoinPool.managedBlock(this);
                     } catch (InterruptedException cannotHappen) { }
                 } else {
-                    if (e == null) {
-                        LockSupport.park();
-                    } else {
-                        LockSupport.park();
-                        check(e);
-                    }
+                    LockSupport.park();
                 }
+            }
+            if (was_put) {
+                check(e, item);
             }
             if (spins < 0) {
                 LockSupport.setCurrentBlocker(null);

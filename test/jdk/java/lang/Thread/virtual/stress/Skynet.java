@@ -93,6 +93,7 @@ public class Skynet {
                     q.put(e);
                     break;
                 } catch (InterruptedException x) {
+                    System.out.println("put interrupted!!" + e);
                     interrupted = true;
                 }
             }
@@ -108,6 +109,7 @@ public class Skynet {
                     e = q.take();
                     break;
                 } catch (InterruptedException x) {
+                    System.out.println("receive interrupted!!");
                     interrupted = true;
                 }
             }
