@@ -164,7 +164,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
          * @param ns timeout or 0 if immediate, Long.MAX_VALUE if untimed
          * @return an item if matched, else e
          */
-        final Object xferLifo(Object e, long ns) {
+        final Object xferLifo(Object e, long ns, boolean isPut) {
             boolean haveData = (e != null);
             Object m;                              // the match or e if none
             outer: for (DualNode s = null, p = head;;) {
@@ -192,7 +192,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
                 s.next = p;
                 if (p == (p = cmpExHead(p, s))) {
                     if ((m = s.await(e, ns, this,  // spin if (nearly) empty
-                                     p == null || p.waiter == null)) == e)
+                                     p == null || p.waiter == null, isPut)) == e)
                         unspliceLifo(s);           // cancelled
                     else if (m != null)
                         s.selfLinkItem();
@@ -230,9 +230,9 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
     private final transient boolean fair;
 
     /** Invokes fair or lifo transfer */
-    private Object xfer(Object e, long nanos) {
+    private Object xfer(Object e, long nanos, boolean isPut) {
         Transferer<E> x = transferer;
-        return (fair) ? x.xfer(e, nanos) : x.xferLifo(e, nanos);
+        return (fair) ? x.xfer(e, nanos, isPut) : x.xferLifo(e, nanos, isPut);
     }
 
     /**
@@ -263,7 +263,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
     public void put(E e) throws InterruptedException {
         Objects.requireNonNull(e);
         if (!Thread.interrupted()) {
-            if (xfer(e, Long.MAX_VALUE) == null)
+            if (xfer(e, Long.MAX_VALUE, true) == null)
                 return;
             Thread.interrupted(); // failure possible only due to interrupt
         }
@@ -283,7 +283,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
         throws InterruptedException {
         Objects.requireNonNull(e);
         long nanos = Math.max(unit.toNanos(timeout), 0L);
-        if (xfer(e, nanos) == null)
+        if (xfer(e, nanos, true) == null)
             return true;
         if (!Thread.interrupted())
             return false;
@@ -301,7 +301,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
      */
     public boolean offer(E e) {
         Objects.requireNonNull(e);
-        return xfer(e, 0L) == null;
+        return xfer(e, 0L, true) == null;
     }
 
     /**
@@ -315,7 +315,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
     public E take() throws InterruptedException {
         Object e;
         if (!Thread.interrupted()) {
-            if ((e = xfer(null, Long.MAX_VALUE)) != null)
+            if ((e = xfer(null, Long.MAX_VALUE, false)) != null)
                 return (E) e;
             Thread.interrupted();
         }
@@ -335,7 +335,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
     public E poll(long timeout, TimeUnit unit) throws InterruptedException {
         Object e;
         long nanos = Math.max(unit.toNanos(timeout), 0L);
-        if ((e = xfer(null, nanos)) != null || !Thread.interrupted())
+        if ((e = xfer(null, nanos, false)) != null || !Thread.interrupted())
             return (E) e;
         throw new InterruptedException();
     }
@@ -349,7 +349,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
      */
     @SuppressWarnings("unchecked")
     public E poll() {
-        return (E) xfer(null, 0L);
+        return (E) xfer(null, 0L, false);
     }
 
     /**
