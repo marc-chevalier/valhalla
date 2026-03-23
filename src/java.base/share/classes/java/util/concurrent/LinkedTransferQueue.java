@@ -422,14 +422,12 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
             }
         }
 
-        static void check(boolean isPut, Object e, Object item) {
-            if (isPut) {
-                if (e == null) {
-                    throw new OmaeWaMouShindeiru();
-                }
-                if (item != null) {
-                    throw new OmaeWaMouShindeiru();
-                }
+        static void check(Object e, Object item) {
+            if (e == null) {
+                throw new OmaeWaMouShindeiru();
+            }
+            if (item != null) {
+                throw new OmaeWaMouShindeiru();
             }
         }
 
@@ -442,7 +440,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
          * @param spin true if should spin when enabled
          * @return matched item, or e if unmatched on interrupt or timeout
          */
-        final Object await(Object e, long ns, Object blocker, boolean spin, boolean isPut) {
+        final Object await(Object e, long ns, Object blocker, boolean spin) {
             Object m;                      // the match or e if none
             boolean timed = (ns != Long.MAX_VALUE);
             long deadline = (timed) ? System.nanoTime() + ns : 0L;
@@ -483,7 +481,6 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
                 LockSupport.setCurrentBlocker(null);
                 waiter = null;
             }
-            check(isPut, e, item);
             return m;
         }
 
@@ -594,7 +591,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
      *        Long.MAX_VALUE if untimed
      * @return an item if matched, else e
      */
-    final Object xfer(Object e, long ns, boolean isPut) {
+    final Object xfer(Object e, long ns) {
         boolean haveData = (e != null);
         Object m;                           // the match or e if none
         DualNode s = null, p;               // enqueued node and its predecessor
@@ -636,7 +633,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
         if (s == null || ns <= 0L)
             m = e;                          // don't wait
         else if ((m = s.await(e, ns, this,  // spin if at or near head
-                              p == null || p.waiter == null, isPut)) == e)
+                              p == null || p.waiter == null)) == e)
             unsplice(p, s);                 // cancelled
         else if (m != null)
             s.selfLinkItem();
@@ -1169,7 +1166,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
      */
     public void put(E e) {
         Objects.requireNonNull(e);
-        xfer(e, -1L, true);
+        xfer(e, -1L);
     }
 
     /**
@@ -1183,7 +1180,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
      */
     public boolean offer(E e, long timeout, TimeUnit unit) {
         Objects.requireNonNull(e);
-        xfer(e, -1L, true);
+        xfer(e, -1L);
         return true;
     }
 
@@ -1196,7 +1193,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
      */
     public boolean offer(E e) {
         Objects.requireNonNull(e);
-        xfer(e, -1L, true);
+        xfer(e, -1L);
         return true;
     }
 
@@ -1210,7 +1207,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
      */
     public boolean add(E e) {
         Objects.requireNonNull(e);
-        xfer(e, -1L, true);
+        xfer(e, -1L);
         return true;
     }
 
@@ -1226,7 +1223,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
      */
     public boolean tryTransfer(E e) {
         Objects.requireNonNull(e);
-        return xfer(e, 0L, true) == null;
+        return xfer(e, 0L) == null;
     }
 
     /**
@@ -1243,7 +1240,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
     public void transfer(E e) throws InterruptedException {
         Objects.requireNonNull(e);
         if (!Thread.interrupted()) {
-            if (xfer(e, Long.MAX_VALUE, true) == null)
+            if (xfer(e, Long.MAX_VALUE) == null)
                 return;
             Thread.interrupted(); // failure possible only due to interrupt
         }
@@ -1268,7 +1265,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
         throws InterruptedException {
         Objects.requireNonNull(e);
         long nanos = Math.max(unit.toNanos(timeout), 0L);
-        if (xfer(e, nanos, true) == null)
+        if (xfer(e, nanos) == null)
             return true;
         if (!Thread.interrupted())
             return false;
@@ -1279,7 +1276,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
     public E take() throws InterruptedException {
         Object e;
         if (!Thread.interrupted()) {
-            if ((e = xfer(null, Long.MAX_VALUE, false)) != null)
+            if ((e = xfer(null, Long.MAX_VALUE)) != null)
                 return (E) e;
             Thread.interrupted();
         }
@@ -1290,14 +1287,14 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
     public E poll(long timeout, TimeUnit unit) throws InterruptedException {
         Object e;
         long nanos = Math.max(unit.toNanos(timeout), 0L);
-        if ((e = xfer(null, nanos, false)) != null || !Thread.interrupted())
+        if ((e = xfer(null, nanos)) != null || !Thread.interrupted())
             return (E) e;
         throw new InterruptedException();
     }
 
     @SuppressWarnings("unchecked")
     public E poll() {
-        return (E) xfer(null, 0L, false);
+        return (E) xfer(null, 0L);
     }
 
     /**
