@@ -428,10 +428,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
 
         static void check(Object e, Object item) {
             if (e == null) {
-                throw new OmaeWaMouShindeiru();
-            }
-            if (item != null) {
-                throw new OmaeWaMouShindeiru();
+                throw new OmaeWaMouShindeiru("e");
             }
         }
 
