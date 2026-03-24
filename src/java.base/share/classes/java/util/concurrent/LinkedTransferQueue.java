@@ -422,6 +422,10 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
             }
         }
 
+        static boolean isNull(Object e) {
+            return e == null;
+        }
+
         static void check(Object e, Object item) {
             if (e == null) {
                 throw new OmaeWaMouShindeiru();
@@ -442,6 +446,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
          */
         final Object await(Object e, long ns, Object blocker, boolean spin) {
             Object m;                      // the match or e if none
+            boolean isPut = !isNull(e);
             boolean timed = (ns != Long.MAX_VALUE);
             long deadline = (timed) ? System.nanoTime() + ns : 0L;
             boolean upc = isUniprocessor;  // don't spin but later recheck
@@ -474,8 +479,12 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
                     try {
                         ForkJoinPool.managedBlock(this);
                     } catch (InterruptedException cannotHappen) { }
-                } else
+                } else {
                     LockSupport.park();
+                    if (isPut) {
+                        check(e, item);
+                    }
+                }
             }
             if (spins < 0) {
                 LockSupport.setCurrentBlocker(null);
