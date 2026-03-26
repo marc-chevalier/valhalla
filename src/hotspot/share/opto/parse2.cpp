@@ -2203,32 +2203,32 @@ void Parse::do_acmp(BoolTest::mask btest, Node* left, Node* right) {
     }
   }
 
-  if (left_ptr == ProfileAlwaysNull) {
+  if (left_ptr == ProfileAlwaysNull && false) {
     // Comparison with null. Assert the input is indeed null and we're done.
     acmp_always_null_input(left, tleft, btest, eq_region);
     return;
   }
-  if (right_ptr == ProfileAlwaysNull) {
+  if (right_ptr == ProfileAlwaysNull && false) {
     // Comparison with null. Assert the input is indeed null and we're done.
     acmp_always_null_input(right, tright, btest, eq_region);
     return;
   }
-  if (left_type != nullptr && !left_type->is_inlinetype()) {
+  if (left_type != nullptr && !left_type->is_inlinetype() && false) {
     // Comparison with an object of known type
     acmp_type_check(left, tleft, left_ptr, left_type, btest, eq_region);
     return;
   }
-  if (right_type != nullptr && !right_type->is_inlinetype()) {
+  if (right_type != nullptr && !right_type->is_inlinetype() && false) {
     // Comparison with an object of known type
     acmp_type_check(right, tright, right_ptr, right_type, btest, eq_region);
     return;
   }
-  if (!left_inline_type) {
+  if (!left_inline_type && false) {
     // Comparison with an object known not to be an inline type
     acmp_type_check(left, tleft, left_ptr, nullptr, btest, eq_region);
     return;
   }
-  if (!right_inline_type) {
+  if (!right_inline_type && false) {
     // Comparison with an object known not to be an inline type
     acmp_type_check(right, tright, right_ptr, nullptr, btest, eq_region);
     return;
