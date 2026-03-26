@@ -2082,7 +2082,7 @@ void Parse::do_acmp(BoolTest::mask btest, Node* left, Node* right) {
   bool right_inline_type = true;
 
   // Leverage profiling at acmp
-  if (UseACmpProfile) {
+  if (UseACmpProfile && false) {
     method()->acmp_profiled_type(bci(), left_type, right_type, left_ptr, right_ptr, left_inline_type, right_inline_type);
     if (too_many_traps_or_recompiles(Deoptimization::Reason_class_check)) {
       left_type = nullptr;
@@ -2096,7 +2096,7 @@ void Parse::do_acmp(BoolTest::mask btest, Node* left, Node* right) {
     }
   }
 
-  if (UseTypeSpeculation) {
+  if (UseTypeSpeculation && false) {
     record_profile_for_speculation(left, left_type, left_ptr);
     record_profile_for_speculation(right, right_type, right_ptr);
   }
