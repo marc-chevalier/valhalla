@@ -43,7 +43,7 @@ import java.util.concurrent.ThreadFactory;
 
 public class Skynet {
     public static void main(String[] args) {
-        int iterations = (args.length > 0) ? Integer.parseInt(args[0]) : 10;
+        int iterations = (args.length > 0) ? Integer.parseInt(args[0]) : 1;
         for (int i = 0; i < iterations; i++) {
             skynet(1_000_000, 499999500000L);
         }

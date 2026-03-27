@@ -1954,6 +1954,7 @@ Node* GraphKit::load_array_element(Node* ary, Node* idx, const TypeAryPtr* aryty
 //-------------------------set_arguments_for_java_call-------------------------
 // Arguments (pre-popped from the stack) are taken from the JVMS.
 void GraphKit::set_arguments_for_java_call(CallJavaNode* call, bool is_late_inline) {
+  bool is_check = call->method()->name()->get_symbol()->equals("check");
   PreserveReexecuteState preexecs(this);
   if (Arguments::is_valhalla_enabled()) {
     // Make sure the call is "re-executed", if buffering of inline type arguments triggers deoptimization.
@@ -2005,6 +2006,15 @@ void GraphKit::set_arguments_for_java_call(CallJavaNode* call, bool is_late_inli
     }
     if (t != Type::HALF) {
       arg_num++;
+    }
+
+    if (is_check && idx == 5 && arg->Opcode() == Op_ConP) {
+      tty->print_cr("##### GREP i: %d; idx: %d; is_check: %s; call:", i, idx, is_check ? "true" : "false");
+      call->dump();
+      tty->print_cr("arg:");
+      arg->dump();
+      tty->print_cr("\n");
+      assert(idx != 5 || arg->Opcode() != Op_ConP, "BOOM");
     }
     call->init_req(idx++, arg);
   }

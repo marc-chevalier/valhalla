@@ -426,9 +426,15 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
             return e == null;
         }
 
-        static void check(Object e, Object item) {
+        static void check(Object e, String where) {
             if (e == null) {
-                throw new OmaeWaMouShindeiru("e");
+                throw new OmaeWaMouShindeiru("e: " + where);
+            }
+        }
+
+        static void check2(Object m) {
+            if (m != null) {
+                throw new OmaeWaMouShindeiru("m");
             }
         }
 
@@ -451,37 +457,81 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
             if (spin && ForkJoinWorkerThread.hasKnownQueuedWork())
                 spin = false;              // don't spin
             int spins = (spin & !upc) ? SPINS : 0; // negative when may park
+            if (isPut) {
+                check(e, "before loop");
+            }
             while ((m = item) == e) {
+                if (isPut) {
+                    check(e, "head of loop");
+                }
                 if (spins >= 0) {
-                    if (--spins >= 0)
+                    if (--spins >= 0) {
+                        if (isPut) {
+                            check(e, "before onSpinWait");
+                        }
                         Thread.onSpinWait();
+                        if (isPut) {
+                            check(e, "after onSpinWait");
+                        }
+                    }
                     else {                 // prepare to park
+                        if (isPut) {
+                            check(e, "before setCurrentBlocker");
+                        }
                         if (spin)          // occasionally recheck
                             checkForUniprocessor(upc);
                         LockSupport.setCurrentBlocker(blocker);
                         waiter = w;        // ensure ordering
                         VarHandle.fullFence();
+                        if (isPut) {
+                            check(e, "after setCurrentBlocker");
+                        }
                     }
                 } else if (w.isInterrupted() ||
                            (timed &&       // try to cancel with impossible match
                             ((ns = deadline - System.nanoTime()) <= 0L))) {
+                    if (isPut) {
+                        check(e, "before cmpExItem");
+                    }
                     m = cmpExItem(e, (e == null) ? this : null);
                     break;
                 } else if (timed) {
+                    if (isPut) {
+                        check(e, "before parkNanos");
+                    }
                     if (ns < SPIN_FOR_TIMEOUT_THRESHOLD)
                         Thread.onSpinWait();
                     else
                         LockSupport.parkNanos(ns);
+                    if (isPut) {
+                        check(e, "after parkNanos");
+                    }
                 } else if (w instanceof ForkJoinWorkerThread) {
+                    if (isPut) {
+                        check(e, "before managedBlock");
+                    }
                     try {
                         ForkJoinPool.managedBlock(this);
                     } catch (InterruptedException cannotHappen) { }
+                    if (isPut) {
+                        check(e, "after managedBlock");
+                    }
                 } else {
+                    if (isPut) {
+                        check(e, "before park");
+                    }
                     LockSupport.park();
                     if (isPut) {
-                        check(e, item);
+                        check(e, "after park");
                     }
                 }
+                if (isPut) {
+                    check(e, "end of loop");
+                }
+            }
+            if (isPut) {
+                check(e, "after loop");
+                check2(m);
             }
             if (spins < 0) {
                 LockSupport.setCurrentBlocker(null);
