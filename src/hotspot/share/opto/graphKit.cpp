@@ -4014,6 +4014,25 @@ Node* GraphKit::null_free_atomic_array_test(Node* array, ciInlineKlass* vk) {
   return _gvn.transform(new BoolNode(cmp, BoolTest::eq));
 }
 
+void GraphKit::atomic_layout_array_test(Node* array, RegionNode* atomic_region) {
+  Node* array_klass = load_object_klass(array);
+  int layout_kind_offset = in_bytes(FlatArrayKlass::layout_kind_offset());
+  Node* layout_kind_addr = basic_plus_adr(top(), array_klass, layout_kind_offset);
+  Node* layout_kind = make_load(nullptr, layout_kind_addr, TypeInt::INT, T_INT, MemNode::unordered);
+  Node* cmp_null_free = _gvn.transform(new CmpINode(layout_kind, intcon((int)LayoutKind::NULL_FREE_ATOMIC_FLAT)));
+  Node* bol_null_free = _gvn.transform(new BoolNode(cmp_null_free, BoolTest::eq));
+  Node* cmp_nullable = _gvn.transform(new CmpINode(layout_kind, intcon((int)LayoutKind::NULLABLE_ATOMIC_FLAT)));
+  Node* bol_nullable = _gvn.transform(new BoolNode(cmp_nullable, BoolTest::eq));
+
+  IfNode* iff_null_free = create_and_xform_if(control(), bol_null_free, PROB_FAIR, COUNT_UNKNOWN);
+  atomic_region->add_req(_gvn.transform(new IfTrueNode(iff_null_free)));
+  set_control(_gvn.transform(new IfFalseNode(iff_null_free)));
+
+  IfNode* iff_nullable = create_and_xform_if(control(), bol_nullable, PROB_FAIR, COUNT_UNKNOWN);
+  atomic_region->add_req(_gvn.transform(new IfTrueNode(iff_nullable)));
+  set_control(_gvn.transform(new IfFalseNode(iff_nullable)));
+}
+
 // Deoptimize if 'ary' is a null-free inline type array and 'val' is null
 Node* GraphKit::inline_array_null_guard(Node* ary, Node* val, int nargs, bool safe_for_replace) {
   RegionNode* region = new RegionNode(3);

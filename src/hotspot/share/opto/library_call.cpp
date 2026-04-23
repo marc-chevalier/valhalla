@@ -4801,11 +4801,43 @@ bool LibraryCallKit::inline_getArrayProperties(ArrayPropertiesCheck check) {
     case IsNullRestricted:
       bol = null_free_array_test(array);
       break;
-    case IsAtomic:
-      // TODO 8350865 Implement this. It's a bit more complicated, see conditions in JVM_IsAtomicArray
-      // Enable TestIntrinsics::test87/88 once this is implemented
-      // bol = null_free_atomic_array_test
-      return false;
+    case IsAtomic: {
+      // See conditions in JVM_IsAtomicArray
+      // 1. If not flat, then atomic, or else...
+      RegionNode* atomic_region = new RegionNode(1);
+      Node* array_klass = load_object_klass(array);
+      Node* is_flat_bol = flat_array_test(array_klass);
+      IfNode* iff_is_flat = create_and_xform_if(control(), is_flat_bol, PROB_FAIR, COUNT_UNKNOWN);
+      atomic_region->add_req(_gvn.transform(new IfFalseNode(iff_is_flat)));
+      set_control(_gvn.transform(new IfTrueNode(iff_is_flat)));
+
+      // 2. ...if the layout is atomic, then atomic, or else...
+      atomic_layout_array_test(array, atomic_region);
+
+      // 3. ...if the element type is naturally atomic, then atomic, or else...
+      int element_klass_offset = in_bytes(ObjArrayKlass::element_klass_offset());
+      Node* array_element_klass_addr = off_heap_plus_addr(array_klass, element_klass_offset);
+      Node* array_element_klass = _gvn.transform(LoadKlassNode::make(_gvn, immutable_memory(), array_element_klass_addr, _gvn.type(array_klass)->is_klassptr()));
+      int klass_flags_offset = in_bytes(InstanceKlass::misc_flags_offset() + InstanceKlassFlags::flags_offset());
+      Node* array_element_klass_flags_addr = off_heap_plus_addr(array_element_klass, klass_flags_offset);
+      Node* array_element_klass_flags = make_load(control(), array_element_klass_flags_addr, TypeInt::INT, T_INT, MemNode::unordered);
+      Node* is_naturally_atomic_flag = _gvn.transform(new AndINode(array_element_klass_flags, intcon(InstanceKlassFlags::_misc_is_naturally_atomic)));
+      Node* is_naturally_atomic_cmp = _gvn.transform(new CmpINode(is_naturally_atomic_flag, intcon(0)));
+      Node* is_naturally_atomic_bol = _gvn.transform(new BoolNode(is_naturally_atomic_cmp, BoolTest::ne));
+      IfNode* iff_is_naturally_atomic = create_and_xform_if(control(), is_naturally_atomic_bol, PROB_FAIR, COUNT_UNKNOWN);
+      atomic_region->add_req(_gvn.transform(new IfTrueNode(iff_is_naturally_atomic)));
+      set_control(_gvn.transform(new IfFalseNode(iff_is_naturally_atomic)));
+
+      // ...non-atomic, but we tried everything.
+      RegionNode* decision = new RegionNode(3);
+      decision->set_req(1, _gvn.transform(atomic_region));
+      decision->set_req(2, control());
+      set_control(_gvn.transform(decision));
+      PhiNode* result = PhiNode::make(decision, intcon(1), TypeInt::BOOL);
+      result->set_req(2, intcon(0));
+      set_result(_gvn.transform(result));
+      return true;
+    }
     default:
       ShouldNotReachHere();
   }
