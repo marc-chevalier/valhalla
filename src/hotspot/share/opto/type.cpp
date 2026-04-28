@@ -5732,6 +5732,10 @@ bool TypeAryPtr::empty(void) const {
   if (_ary->empty())       return true;
   // TODO 8350865 This should go to the meet implementation
   if (is_flat() && is_not_flat()) {
+    stringStream ss;
+    ss.print("this: ");
+    dump_on(&ss);
+    assert(false, "something is wrong: %s", ss.base());
     return true;
   }
   return TypeOopPtr::empty();
