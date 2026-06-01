@@ -37,6 +37,7 @@ class ObjArrayKlass : public ArrayKlass {
   friend class JVMCIVMStructs;
   friend class oopFactory;
   friend class VMStructs;
+  friend class ciInlineKlass;
 
  public:
   static const KlassKind Kind = ObjArrayKlassKind;
