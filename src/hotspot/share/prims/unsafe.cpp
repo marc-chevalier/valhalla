@@ -388,6 +388,15 @@ UNSAFE_ENTRY(jobject, Unsafe_GetFlatValue(JNIEnv *env, jobject unsafe, jobject o
     THROW_NULL(vmSymbols::java_lang_NullPointerException());
   }
   Klass* k = java_lang_Class::as_Klass(JNIHandles::resolve_non_null(vc));
+  if (!k->is_inline_klass()) {
+    tty->cr();
+    tty->cr();
+    tty->print("base:");
+    base->print();
+    tty->print("\nk:");
+    k->print();
+    tty->print("\noffset: %ld; layoutKind: %d", offset, layoutKind);
+  }
   InlineKlass* vk = InlineKlass::cast(k);
   log_unsafe_value_access(base, offset, vk);
   LayoutKind lk = (LayoutKind)layoutKind;
