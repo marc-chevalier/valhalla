@@ -968,7 +968,6 @@ private:
 
   GrowableArray<Method*>* _supers;
   GrowableArray<Method*>* get_supers();
-  bool check_supers_and_deoptimize(int arg_num);
 
 public:
   Method* method()                     const { return _method; }
@@ -999,7 +998,7 @@ public:
   CodeOffsets::Entries c1_inline_ro_entry_type() const;
 
   CompiledEntrySignature(Method* method = nullptr);
-  void compute_calling_conventions(bool link_time = true);
+  void compute_calling_conventions(bool init = true);
   void initialize_from_fingerprint(AdapterFingerPrint* fingerprint);
 };
 
