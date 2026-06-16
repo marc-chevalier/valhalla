@@ -2629,9 +2629,7 @@ bool TypeAry::ary_must_be_exact() const {
     if (tinst->instance_klass()->is_final()) {
       // Even though MyValue is final, [LMyValue is only exact if the array
       // is (not) null-free due to null-free [LMyValue <: null-able [LMyValue.
-      // TODO 8350865 If we know that the array can't be null-free, it's allowed to be exact, right?
-      // If so, we should add '&& !_not_null_free'
-      if (tinst->is_inlinetypeptr() && (tinst->ptr() != TypePtr::NotNull)) {
+      if (tinst->is_inlinetypeptr() && (tinst->ptr() != TypePtr::NotNull) && !_not_null_free) {
         return false;
       }
       return true;
