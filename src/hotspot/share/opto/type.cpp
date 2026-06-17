@@ -1150,7 +1150,7 @@ const Type *Type::meet_helper(const Type *t, bool include_speculative) const {
   }
   // TODO 8350865 This currently triggers a verification failure, the code around "// Even though MyValue is final" needs adjustments
   if ((this_t->isa_ptr() && this_t->is_ptr()->is_not_flat()) ||
-      (this_t->_dual->isa_ptr() && this_t->_dual->is_ptr()->is_not_flat())) return mt;
+      (this_t->_dual->isa_ptr() && this_t->_dual->is_ptr()->is_not_flat()));
   this_t->check_symmetrical(t, mt, verify);
   const Type *mt_dual = verify.meet(this_t->_dual, t->_dual);
   this_t->_dual->check_symmetrical(t->_dual, mt_dual, verify);
