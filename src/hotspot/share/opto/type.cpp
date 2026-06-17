@@ -2627,6 +2627,9 @@ bool TypeAry::ary_must_be_exact() const {
     tinst = _elem->isa_instptr();
   if (tinst) {
     if (tinst->instance_klass()->is_final()) {
+      if (TypePtr::above_centerline(tinst->ptr())) {
+        return false;
+      }
       // Even though MyValue is final, [LMyValue is only exact if the array
       // is (not) null-free due to null-free [LMyValue <: null-able [LMyValue.
       if (tinst->is_inlinetypeptr() && (tinst->ptr() != TypePtr::NotNull) && !_not_null_free) {
