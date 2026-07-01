@@ -138,6 +138,13 @@ int InlineKlass::nonstatic_oop_count() {
 // Arrays of...
 
 bool InlineKlass::maybe_flat_in_array() {
+  if (UseNewCode2) {
+    auto is_flat = [&](bool non_atomic, bool null_restricted) -> bool {
+      auto description = ObjArrayKlass::array_layout_selection(this, ArrayProperties::Default().with_non_atomic(non_atomic).with_null_restricted(null_restricted));
+      return LayoutKindHelper::is_flat(description._layout_kind);
+    };
+    return is_flat(true, true) || is_flat(true, false) || is_flat(false, false);
+  }
   if (!UseArrayFlattening) {
     return false;
   }
@@ -153,6 +160,9 @@ bool InlineKlass::maybe_flat_in_array() {
 }
 
 bool InlineKlass::is_always_flat_in_array() {
+  if (UseNewCode) {
+    return false;
+  }
   if (!UseArrayFlattening) {
     return false;
   }
