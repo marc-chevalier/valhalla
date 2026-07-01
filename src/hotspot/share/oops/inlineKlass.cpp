@@ -139,11 +139,11 @@ int InlineKlass::nonstatic_oop_count() {
 
 bool InlineKlass::maybe_flat_in_array() {
   if (UseNewCode2) {
-    auto is_flat = [&](bool non_atomic, bool null_restricted) -> bool {
+    auto is_flat = [&](bool null_restricted, bool non_atomic) -> bool {
       auto description = ObjArrayKlass::array_layout_selection(this, ArrayProperties::Default().with_non_atomic(non_atomic).with_null_restricted(null_restricted));
       return LayoutKindHelper::is_flat(description._layout_kind);
     };
-    return is_flat(true, true) || is_flat(true, false) || is_flat(false, false);
+    return is_flat(false, false) || is_flat(true, false) || is_flat(true, true);
   }
   if (!UseArrayFlattening) {
     return false;
