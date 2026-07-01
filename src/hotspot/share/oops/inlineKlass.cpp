@@ -138,32 +138,11 @@ int InlineKlass::nonstatic_oop_count() {
 // Arrays of...
 
 bool InlineKlass::maybe_flat_in_array() {
-  if (!UseArrayFlattening) {
-    return false;
-  }
-  // Too many embedded oops
-  if ((FlatArrayElementMaxOops >= 0) && (nonstatic_oop_count() > FlatArrayElementMaxOops)) {
-    return false;
-  }
-  // No flat layout?
-  if (!has_nullable_atomic_layout() && !has_null_free_atomic_layout() && !has_null_free_non_atomic_layout()) {
-    return false;
-  }
-  return true;
-}
-
-bool InlineKlass::is_always_flat_in_array() {
-  if (!UseArrayFlattening) {
-    return false;
-  }
-  // Too many embedded oops
-  if ((FlatArrayElementMaxOops >= 0) && (nonstatic_oop_count() > FlatArrayElementMaxOops)) {
-    return false;
-  }
-
-  // An instance is always flat in an array if we have all layouts. Note that this could change in the future when the
-  // flattening policies are updated or if new APIs are added that allow the creation of reference arrays directly.
-  return has_nullable_atomic_layout() && has_null_free_atomic_layout() && has_null_free_non_atomic_layout();
+  auto is_flat = [&](bool non_atomic, bool null_restricted) -> bool {
+    auto description = ObjArrayKlass::array_layout_selection(this, ArrayProperties::Default().with_non_atomic(non_atomic).with_null_restricted(null_restricted));
+    return LayoutKindHelper::is_flat(description._layout_kind);
+  };
+  return is_flat(true, true) || is_flat(true, false) || is_flat(false, false);
 }
 
 // Inline type arguments are not passed by reference, instead each
