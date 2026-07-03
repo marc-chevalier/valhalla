@@ -5582,10 +5582,7 @@ bool LibraryCallKit::inline_native_hashcode(bool is_virtual, bool is_static) {
           Node* klass_header = make_load(no_ctrl, klass_header_addr, TypeX_X, TypeX_X->basic_type(), MemNode::unordered);
           hashcode_is_safe_to_read(klass_header, slow_region);
           if (!stopped()) {
-            Node* result = get_hashcode_from_header(klass_header, slow_region);
-
-            RegionNode* long_not_long_region = new RegionNode(4);
-            Node* fast_path_result = new PhiNode(long_not_long_region, TypeInt::INT);
+            Node* result_empty = get_hashcode_from_header(klass_header, slow_region);
 
             Node* bol_empty_object = BoolCmpI(offset, BoolTest::eq, zerocon(T_INT));
 #ifdef VM_LITTLE_ENDIAN
@@ -5593,23 +5590,23 @@ bool LibraryCallKit::inline_native_hashcode(bool is_virtual, bool is_static) {
 #else
             Node* is_long_payload_bol = BoolCmpI(mask, BoolTest::eq, longcon(-1));
 #endif
-            IfNode* iff_is_empty_object = create_and_map_if(control(), bol_empty_object, PROB_FAIR, COUNT_UNKNOWN);
-            IfNode* iff_is_long_payload = create_and_map_if(IfFalse(iff_is_empty_object), is_long_payload_bol, PROB_FAIR, COUNT_UNKNOWN);
+            Node* result_int = AddI(MulI(intcon(31), result_empty), ConvL2I(obj_extracted));
+            Node* result_long = AddI(MulI(intcon(31), result_int), ConvL2I(URShiftL(obj_extracted, intcon(32))));
+            Node* unmasked_result =
+                _gvn.transform(
+                  new CMoveINode(
+                    bol_empty_object,
+                    _gvn.transform(
+                      new CMoveINode(
+                        is_long_payload_bol,
+                        result_int,
+                        result_long,
+                        TypeInt::INT)),
+                    result_empty,
+                    TypeInt::INT));
+            Node* fast_path_result = AndI(_gvn.transform(unmasked_result), intcon(markWord::hash_mask));
 
-            fast_path_result->init_req(1, result);
-            long_not_long_region->init_req(1, IfTrue(iff_is_empty_object));
-
-            result = AddI(MulI(intcon(31), result), ConvL2I(obj_extracted));
-            fast_path_result->init_req(2, result);
-            long_not_long_region->init_req(2, IfFalse(iff_is_long_payload));
-
-            result = AddI(MulI(intcon(31), result), ConvL2I(URShiftL(obj_extracted, intcon(32))));
-            fast_path_result->init_req(3, result);
-            long_not_long_region->init_req(3, IfTrue(iff_is_long_payload));
-
-            fast_path_result = AndI(_gvn.transform(fast_path_result), intcon(markWord::hash_mask));
-
-            result_reg->init_req(_inline_fast_path, _gvn.transform(long_not_long_region));
+            result_reg->init_req(_inline_fast_path, control());
             result_val->init_req(_inline_fast_path, fast_path_result);
           }
         }
