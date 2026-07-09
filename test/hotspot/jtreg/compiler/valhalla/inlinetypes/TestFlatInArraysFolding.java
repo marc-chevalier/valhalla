@@ -79,8 +79,7 @@ public class TestFlatInArraysFolding {
 
     public static void main(String[] args) {
         // TODO 8350865 Scenarios are equivalent, FlatArrayElementMaxSize does not exist anymore
-        Scenario flatArrayElementMaxSize1Scenario = new Scenario(1, "-XX:-UseArrayFlattening");
-        Scenario flatArrayElementMaxSize4Scenario = new Scenario(2, "-XX:-UseArrayFlattening");
+        Scenario noArrayFlatteningScenario = new Scenario(1, "-XX:-UseArrayFlattening");
         Scenario noFlagsScenario = new Scenario(3);
         TestFramework testFramework = new TestFramework();
         testFramework.setDefaultWarmup(0)
@@ -88,8 +87,7 @@ public class TestFlatInArraysFolding {
                           "--add-exports", "java.base/jdk.internal.value=ALL-UNNAMED",
                           "--add-exports", "java.base/jdk.internal.vm.annotation=ALL-UNNAMED",
                           "-XX:+UnlockDiagnosticVMOptions")
-                .addScenarios(flatArrayElementMaxSize1Scenario,
-                              flatArrayElementMaxSize4Scenario, noFlagsScenario);
+                .addScenarios(noArrayFlatteningScenario, noFlagsScenario);
 
         if (args.length > 0) {
             // Disable Loop Unrolling for IR matching in testCmpP().
