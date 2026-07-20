@@ -609,6 +609,7 @@ void ciTypeFlow::StateVector::do_aload(ciBytecodeStream* str) {
   } else {
     ciType* maybe_null_free_element_klass = element_klass;
     if (array_klass->is_null_free()) {
+      assert(false, "hit!");
       maybe_null_free_element_klass = outer()->mark_as_null_free(element_klass);
     }
     push(maybe_null_free_element_klass);
